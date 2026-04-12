@@ -1,21 +1,23 @@
 # ClassicUs
 
 ClassicUs is a project that aims to refine the classic, old feeling of Among Us from 2020-2021, and it is based on an older version of the game.
-![ClassicUsGif1](https://github.com/user-attachments/assets/b841bc31-012b-417c-b409-d54d23a04685)
+![Loading](https://github.com/user-attachments/assets/93f5a2b7-7bba-44e5-9ed0-2bc4ed54e3ac)
+
 
 # Lobby Hosting
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/c03ff711-8998-4d4b-9156-38b017a5acc6" />
 
 The game allows you to play online with others and there is NO timer of Lobby closing down due to inactivity.
-<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/516f94ff-9d02-4386-ad4f-09ec3962ead2" />
 
-# ...up to 100 players in a lobby??????
 
-Speaking of playing online with others, you can play up to *100 players!*
-![ClassicUsGif2](https://github.com/user-attachments/assets/4489853d-9471-43c5-a572-91a6486d19d8)
+# ...up to 50 players in a lobby??????
 
-# how many languages will the game support?
+Speaking of playing online with others, you can play up to *50 players!*
+![CreateGame](https://github.com/user-attachments/assets/21d8e459-0cd5-440f-b13f-b28e3b88e061)
 
-currently we only have the following:
+
+# how many languages does the game support?
+
 - English
 - Portuguese
 - Argentinian Spanish
@@ -26,19 +28,16 @@ currently we only have the following:
 - Italian
 - Polish
 - Russian
-- Vietnamese
 - Swedish
-- <img width="1619" height="1440" alt="image" src="https://github.com/user-attachments/assets/fbf999b9-9d61-46d8-b224-c404072b5a0e" />
-
-# What is that Party Button in the Main Menu Screen???? 
-<img width="549" height="150" alt="image" src="https://github.com/user-attachments/assets/d6376de5-7c00-4a84-9ba0-89558b2336cd" />
-
-
-
-Our goal for the party menu is that you can see online created maps made by people in that section and that you can download them to play immediately just like our favourite game ***cough cough*** Geometry Dash and you'll be able to dislike or like the map *yes this is our inspiration from Geometry Dash*.
-Not only that, later on we'll integrate a whole different gamemode on that section that you can play with your friends and wait in the lobby before it starts, EXCITING AND FUN IT WILL BE!!!
-<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/b0710718-3e10-4d3a-83b4-3a04150b1247" />
-
+- Italian
+- Polish
+- Russian
+- Turkish
+- Vietnamese
+- French
+- Korean
+- Japanese
+- ![Languages](https://github.com/user-attachments/assets/53e171bb-cedd-4730-9f23-447d6c1766e2)
 
 #  What platforms will the game support?
 
@@ -51,7 +50,7 @@ you can report issues in our official discord server! [AUAD Discord](https://dis
 
 # Will the game have any quickchat restrictions or reporting? How will I report cheaters & hackers?
 
-The game will have no quickchat restrictions or age verifications, but that does not mean that you cannot be banned. You can **still be banned from the game.** Obey the TOS and you'll be fine, you'll see it when you boot the game up for the first time or right in the credit section: ![ClassicUsGif3](https://github.com/user-attachments/assets/edb040e8-11b9-489f-8384-87b89f20b651) You can still report people in the kick button menu:<img width="437" height="241" alt="image" src="https://github.com/user-attachments/assets/5822d98c-8212-4b3b-85ca-1da354878117" /> that will be sent to staffs to look at & staffs can have the immunity to not get banned & kicked off of a lobby and ban a player in realtime once found the TOS breakers with hacking, cheating or bad behaviour, please behave as staffs have the rights to be immune to any kick & bans.
+The game will have no quickchat restrictions or age verifications, but that does not mean that you cannot be banned. You can **still be banned from the game.** Obey the TOS and you'll be fine, you'll see it when you boot the game up for the first time or right in the credit section: ![TOS](https://github.com/user-attachments/assets/3c2557b2-662d-4ef5-9f71-4d3174c06b1e) You can still report people in the kick button menu:<img width="1355" height="628" alt="Classic_Us_mfm6by1HwW" src="https://github.com/user-attachments/assets/7c4771b1-b5bf-43f9-afaf-f37c9718f769" /> <img width="2306" height="1335" alt="Classic_Us_uQzGc8snxE" src="https://github.com/user-attachments/assets/e2877e89-3d4f-42b7-a808-71671119560a" /> that will be sent to staffs to look at:<img width="1849" height="816" alt="Classic_Us_bRvb114YRh" src="https://github.com/user-attachments/assets/3d1d6702-25ba-4713-808f-4bcb877f922d" />& staffs can have the immunity to not get banned & kicked off of a lobby and ban a player in realtime once found the TOS breakers with hacking, cheating or bad behaviour, please behave as staffs have the rights to be immune to any kick & bans.
 
 Thanks for reading! I hope you understood!
 
