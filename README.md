@@ -25,9 +25,6 @@ Speaking of playing online with others, you can play up to *50 players!*
 - Spain Spanish
 - Dutch
 - German
-- Italian
-- Polish
-- Russian
 - Swedish
 - Italian
 - Polish
