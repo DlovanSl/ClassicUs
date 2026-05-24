@@ -10,7 +10,7 @@ ClassicUs is a project that aims to refine the classic, old feeling of Among Us 
 The game allows you to play online with others and there is NO timer of Lobby closing down due to inactivity.
 
 
-# ...up to 50 players in a lobby??????
+# ...up to 100 players in a lobby??????
 
 Speaking of playing online with others, you can play up to *100 players!*
 ![CreateGame](https://github.com/user-attachments/assets/21d8e459-0cd5-440f-b13f-b28e3b88e061)
