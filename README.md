@@ -55,6 +55,6 @@ as always you should always check our social media out:
 [The AUAD Website](https://auantidater.com/)
 [AUAD Discord Server](https://discord.gg/auad)
 [Our Youtube Channel](https://www.youtube.com/@RealAUAD)
-[Our Twitter](https://x.com/AmogusAntiDater)
+[Our Twitter](https://x.com/RealAUAD)
 [Our KO-FI Donation](https://ko-fi.com/auad)
 
