@@ -3,45 +3,113 @@ name: Auto-Moderate Spammer
 on:
   issue_comment:
     types: [created]
+  issues:
+    types: [opened]
+  workflow_dispatch: # Allows manual triggering from the Actions tab
 
 jobs:
-  nuke_comment:
-    if: github.event.comment.user.login == 'Designgirl29' && contains(github.event.comment.body, 'riker.replit.dev/')
+  nuke_content:
+    # Only enforce the strict filter on automated events; let manual runs bypass it
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' && github.event.comment.user.login == 'Designgirl29' && contains(github.event.comment.body, 'riker.replit.dev/')) ||
+      (github.event_name == 'issues' && github.event.issue.user.login == 'Designgirl29' && contains(github.event.issue.body, 'riker.replit.dev/'))
     runs-on: ubuntu-latest
     permissions:
       issues: write
-      pull-requests: write
 
     steps:
-      - name: Delete malicious comment
+      - name: Handle content automation or cleanup
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PAT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // 1. Delete the specific comment instantly
-            await github.rest.issues.deleteComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id
-            });
-            console.log("Successfully deleted the comment.");
+            const TARGET_USER = 'Designgirl29';
+            const TARGET_LINK = 'riker.replit.dev/';
 
-            // 2. Block the user globally from the account or organization
-            try {
-              // Try blocking from organization first
-              await github.rest.orgs.blockUser({
-                org: context.repo.owner,
-                username: 'Designgirl29'
+            // --- 1. AUTOMATED TRIGGER: Issue Comment ---
+            if (context.eventName === 'issue_comment') {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id
               });
-              console.log("Successfully blocked user from organization.");
-            } catch (orgError) {
-              try {
-                // Fallback to blocking from user account if not an org
-                await github.rest.users.block({
-                  username: 'Designgirl29'
+              console.log("Successfully deleted the live spam comment.");
+            } 
+            
+            // --- 2. AUTOMATED TRIGGER: New Issue ---
+            else if (context.eventName === 'issues') {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                state: 'closed'
+              });
+              await github.rest.issues.lock({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                lock_reason: 'spam'
+              });
+              console.log("Successfully closed and locked the live spam issue.");
+            } 
+            
+            // --- 3. MANUAL TRIGGER: Clean up past history ---
+            else if (context.eventName === 'workflow_dispatch') {
+              console.log(`Starting manual scan for spam from ${TARGET_USER}...`);
+              
+              // Find all open and closed issues created by the user
+              const { data: issues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                creator: TARGET_USER,
+                state: 'all',
+                per_page: 100
+              });
+
+              for (const issue of issues) {
+                // If it's a pull request, skip it (listForRepo includes PRs)
+                if (issue.pull_request) continue;
+
+                // Neutralize the issue if it contains the link
+                if (issue.body && issue.body.includes(TARGET_LINK)) {
+                  if (issue.state !== 'closed') {
+                    await github.rest.issues.update({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      state: 'closed'
+                    });
+                  }
+                  if (!issue.locked) {
+                    await github.rest.issues.lock({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      lock_reason: 'spam'
+                    });
+                  }
+                  console.log(`Manually closed/locked historical issue #${issue.number}`);
+                }
+
+                // Scan all comments within this user's issues for the link
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  per_page: 100
                 });
-                console.log("Successfully blocked user from personal account.");
-              } catch (userError) {
-                console.log("Could not block user. Ensure PAT_TOKEN has 'user:block' or 'admin:org' scopes.");
+
+                for (const comment of comments) {
+                  if (comment.user.login === TARGET_USER && comment.body.includes(TARGET_LINK)) {
+                    await github.rest.issues.deleteComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      comment_id: comment.id
+                    });
+                    console.log(`Manually deleted historical comment ${comment.id} on issue #${issue.number}`);
+                  }
+                }
               }
+              console.log("Manual scan complete.");
             }
