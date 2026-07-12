@@ -16,6 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+    
+    env:
+      # Suppresses the Node deprecation warning in your workflow logs
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
       - name: Handle content automation or cleanup
@@ -53,46 +57,23 @@ jobs:
               console.log("Successfully closed and locked the live spam issue.");
             } 
             
-            // --- 3. MANUAL TRIGGER: Deep sweep of all repository history ---
+            // --- 3. MANUAL TRIGGER: Absolute sweeping of all threads ---
             else if (context.eventName === 'workflow_dispatch') {
-              console.log(`Starting deep manual scan across ALL repo content...`);
+              console.log(`Starting absolute historical purge across ALL repository threads...`);
 
-              // Step A: Deep scan ALL repo comments (regardless of who created the issue)
-              console.log("Scanning repo comments...");
-              const commentPages = github.paginate.iterator(github.rest.issues.listCommentsForRepo, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100
-              });
-
-              for await (const { data: comments } of commentPages) {
-                for (const comment of comments) {
-                  if (comment.user.login === TARGET_USER && comment.body && comment.body.includes(TARGET_LINK)) {
-                    await github.rest.issues.deleteComment({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      comment_id: comment.id
-                    });
-                    console.log(`Deleted historical comment ${comment.id} from issue tracker.`);
-                  }
-                }
-              }
-
-              // Step B: Deep scan ALL issues to neutralize root tickets made by the spammer
-              console.log("Scanning issues created by user...");
+              // Paginate through EVERY single issue/PR in the repository (both open and closed)
               const issuePages = github.paginate.iterator(github.rest.issues.listForRepo, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                creator: TARGET_USER,
                 state: 'all',
                 per_page: 100
               });
 
               for await (const { data: issues } of issuePages) {
                 for (const issue of issues) {
-                  if (issue.pull_request) continue; // Ignore Pull Requests
-
-                  if (issue.body && issue.body.includes(TARGET_LINK)) {
+                  
+                  // Task A: If the spammer created the root issue itself, lock and close it
+                  if (!issue.pull_request && issue.user.login === TARGET_USER && issue.body && issue.body.includes(TARGET_LINK)) {
                     if (issue.state !== 'closed') {
                       await github.rest.issues.update({
                         owner: context.repo.owner,
@@ -109,9 +90,31 @@ jobs:
                         lock_reason: 'spam'
                       });
                     }
-                    console.log(`Closed and locked historical issue #${issue.number}`);
+                    console.log(`Closed & locked root spam issue #${issue.number}`);
                   }
+
+                  // Task B: Scan inside this specific thread for the spammer's comments
+                  const commentPages = github.paginate.iterator(github.rest.issues.listComments, {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    per_page: 100
+                  });
+
+                  for await (const { data: comments } of commentPages) {
+                    for (const comment of comments) {
+                      if (comment.user.login === TARGET_USER && comment.body && comment.body.includes(TARGET_LINK)) {
+                        await github.rest.issues.deleteComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          comment_id: comment.id
+                        });
+                        console.log(`Deleted historical comment ${comment.id} from issue #${issue.number}`);
+                      }
+                    }
+                  }
+
                 }
               }
-              console.log("Deep historical scan completely complete.");
+              console.log("Absolute historical purge completed successfully.");
             }
