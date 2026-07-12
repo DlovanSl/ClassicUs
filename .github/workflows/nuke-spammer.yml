@@ -5,11 +5,10 @@ on:
     types: [created]
   issues:
     types: [opened]
-  workflow_dispatch: # Allows manual triggering from the Actions tab
+  workflow_dispatch: # Manual cleanup
 
 jobs:
   nuke_content:
-    # Only enforce the strict filter on automated events; let manual runs bypass it
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' && github.event.comment.user.login == 'Designgirl29' && contains(github.event.comment.body, 'riker.replit.dev/')) ||
@@ -27,7 +26,7 @@ jobs:
             const TARGET_USER = 'Designgirl29';
             const TARGET_LINK = 'riker.replit.dev/';
 
-            // --- 1. AUTOMATED TRIGGER: Issue Comment ---
+            // --- 1. LIVE TRIGGER: Issue Comment ---
             if (context.eventName === 'issue_comment') {
               await github.rest.issues.deleteComment({
                 owner: context.repo.owner,
@@ -37,7 +36,7 @@ jobs:
               console.log("Successfully deleted the live spam comment.");
             } 
             
-            // --- 2. AUTOMATED TRIGGER: New Issue ---
+            // --- 2. LIVE TRIGGER: New Issue ---
             else if (context.eventName === 'issues') {
               await github.rest.issues.update({
                 owner: context.repo.owner,
@@ -54,12 +53,34 @@ jobs:
               console.log("Successfully closed and locked the live spam issue.");
             } 
             
-            // --- 3. MANUAL TRIGGER: Clean up past history ---
+            // --- 3. MANUAL TRIGGER: Deep sweep of all repository history ---
             else if (context.eventName === 'workflow_dispatch') {
-              console.log(`Starting manual scan for spam from ${TARGET_USER}...`);
-              
-              // Find all open and closed issues created by the user
-              const { data: issues } = await github.rest.issues.listForRepo({
+              console.log(`Starting deep manual scan across ALL repo content...`);
+
+              // Step A: Deep scan ALL repo comments (regardless of who created the issue)
+              console.log("Scanning repo comments...");
+              const commentPages = github.paginate.iterator(github.rest.issues.listCommentsForRepo, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+
+              for await (const { data: comments } of commentPages) {
+                for (const comment of comments) {
+                  if (comment.user.login === TARGET_USER && comment.body && comment.body.includes(TARGET_LINK)) {
+                    await github.rest.issues.deleteComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      comment_id: comment.id
+                    });
+                    console.log(`Deleted historical comment ${comment.id} from issue tracker.`);
+                  }
+                }
+              }
+
+              // Step B: Deep scan ALL issues to neutralize root tickets made by the spammer
+              console.log("Scanning issues created by user...");
+              const issuePages = github.paginate.iterator(github.rest.issues.listForRepo, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 creator: TARGET_USER,
@@ -67,49 +88,30 @@ jobs:
                 per_page: 100
               });
 
-              for (const issue of issues) {
-                // If it's a pull request, skip it (listForRepo includes PRs)
-                if (issue.pull_request) continue;
+              for await (const { data: issues } of issuePages) {
+                for (const issue of issues) {
+                  if (issue.pull_request) continue; // Ignore Pull Requests
 
-                // Neutralize the issue if it contains the link
-                if (issue.body && issue.body.includes(TARGET_LINK)) {
-                  if (issue.state !== 'closed') {
-                    await github.rest.issues.update({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: issue.number,
-                      state: 'closed'
-                    });
-                  }
-                  if (!issue.locked) {
-                    await github.rest.issues.lock({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: issue.number,
-                      lock_reason: 'spam'
-                    });
-                  }
-                  console.log(`Manually closed/locked historical issue #${issue.number}`);
-                }
-
-                // Scan all comments within this user's issues for the link
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issue.number,
-                  per_page: 100
-                });
-
-                for (const comment of comments) {
-                  if (comment.user.login === TARGET_USER && comment.body.includes(TARGET_LINK)) {
-                    await github.rest.issues.deleteComment({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      comment_id: comment.id
-                    });
-                    console.log(`Manually deleted historical comment ${comment.id} on issue #${issue.number}`);
+                  if (issue.body && issue.body.includes(TARGET_LINK)) {
+                    if (issue.state !== 'closed') {
+                      await github.rest.issues.update({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        state: 'closed'
+                      });
+                    }
+                    if (!issue.locked) {
+                      await github.rest.issues.lock({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        lock_reason: 'spam'
+                      });
+                    }
+                    console.log(`Closed and locked historical issue #${issue.number}`);
                   }
                 }
               }
-              console.log("Manual scan complete.");
+              console.log("Deep historical scan completely complete.");
             }
