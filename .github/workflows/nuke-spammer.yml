@@ -11,8 +11,8 @@ jobs:
   nuke_content:
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issue_comment' && github.event.comment.user.login == 'Designgirl29' && contains(github.event.comment.body, 'riker.replit.dev/')) ||
-      (github.event_name == 'issues' && github.event.issue.user.login == 'Designgirl29')
+      (github.event_name == 'issue_comment' && (github.event.comment.user.login == 'Designgirl29' || github.event.comment.user.login == 'techregion' || github.event.comment.user.login == 'Sarahking8') && contains(github.event.comment.body, 'riker.replit.dev/')) ||
+      (github.event_name == 'issues' && (github.event.issue.user.login == 'Designgirl29' || github.event.issue.user.login == 'techregion' || github.event.issue.user.login == 'Sarahking8'))
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -26,7 +26,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const TARGET_USER = 'Designgirl29';
+            // Define the array of targeted accounts
+            const TARGET_USERS = ['Designgirl29', 'techregion', 'Sarahking8'];
 
             // --- 1. LIVE TRIGGER: Issue Comment ---
             if (context.eventName === 'issue_comment') {
@@ -55,44 +56,49 @@ jobs:
               console.log("Automatically closed and locked live new issue.");
             } 
             
-            // --- 3. MANUAL TRIGGER: Nuke everything from user ---
+            // --- 3. MANUAL TRIGGER: Nuke everything from listed users ---
             else if (context.eventName === 'workflow_dispatch') {
-              console.log(`Starting bulk closure for ALL issues created by ${TARGET_USER}...`);
+              console.log(`Starting bulk closure for all targeted accounts...`);
 
-              const issuePages = github.paginate.iterator(github.rest.issues.listForRepo, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                creator: TARGET_USER, // Targets only their items
-                state: 'all',         // Fetches both open and older closed ones to lock them
-                per_page: 100
-              });
+              // Iterate through each specific user to prevent endpoint mapping drops
+              for (const targetUser of TARGET_USERS) {
+                console.log(`Processing history for user: ${targetUser}`);
 
-              for await (const { data: issues } of issuePages) {
-                for (const issue of issues) {
-                  if (issue.pull_request) continue; // Skip Pull Requests
+                const issuePages = github.paginate.iterator(github.rest.issues.listForRepo, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  creator: targetUser,
+                  state: 'all',
+                  per_page: 100
+                });
 
-                  // Close the issue if it is currently open
-                  if (issue.state !== 'closed') {
-                    await github.rest.issues.update({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: issue.number,
-                      state: 'closed'
-                    });
-                    console.log(`Successfully closed issue #${issue.number}`);
-                  }
-                  
-                  // Lock the thread to prevent further spam comments
-                  if (!issue.locked) {
-                    await github.rest.issues.lock({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: issue.number,
-                      lock_reason: 'spam'
-                    });
-                    console.log(`Successfully locked issue #${issue.number}`);
+                for await (const { data: issues } of issuePages) {
+                  for (const issue of issues) {
+                    if (issue.pull_request) continue; // Skip Pull Requests
+
+                    // Close the target issue if it is currently open
+                    if (issue.state !== 'closed') {
+                      await github.rest.issues.update({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        state: 'closed'
+                      });
+                      console.log(`Successfully closed issue #${issue.number} from ${targetUser}`);
+                    }
+                    
+                    // Lock the thread conversation
+                    if (!issue.locked) {
+                      await github.rest.issues.lock({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        lock_reason: 'spam'
+                      });
+                      console.log(`Successfully locked issue #${issue.number} from ${targetUser}`);
+                    }
                   }
                 }
               }
-              console.log("All target issues have been successfully closed and locked.");
+              console.log("All target issues have been successfully processed, closed, and locked.");
             }
