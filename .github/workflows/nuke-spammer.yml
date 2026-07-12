@@ -5,20 +5,19 @@ on:
     types: [created]
   issues:
     types: [opened]
-  workflow_dispatch: # Manual cleanup
+  workflow_dispatch: # Global manual cleanup
 
 jobs:
   nuke_content:
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' && github.event.comment.user.login == 'Designgirl29' && contains(github.event.comment.body, 'riker.replit.dev/')) ||
-      (github.event_name == 'issues' && github.event.issue.user.login == 'Designgirl29' && contains(github.event.issue.body, 'riker.replit.dev/'))
+      (github.event_name == 'issues' && github.event.issue.user.login == 'Designgirl29')
     runs-on: ubuntu-latest
     permissions:
       issues: write
     
     env:
-      # Suppresses the Node deprecation warning in your workflow logs
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
@@ -28,7 +27,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const TARGET_USER = 'Designgirl29';
-            const TARGET_LINK = 'riker.replit.dev/';
 
             // --- 1. LIVE TRIGGER: Issue Comment ---
             if (context.eventName === 'issue_comment') {
@@ -37,7 +35,7 @@ jobs:
                 repo: context.repo.repo,
                 comment_id: context.payload.comment.id
               });
-              console.log("Successfully deleted the live spam comment.");
+              console.log("Successfully deleted live spam comment.");
             } 
             
             // --- 2. LIVE TRIGGER: New Issue ---
@@ -54,67 +52,47 @@ jobs:
                 issue_number: context.payload.issue.number,
                 lock_reason: 'spam'
               });
-              console.log("Successfully closed and locked the live spam issue.");
+              console.log("Automatically closed and locked live new issue.");
             } 
             
-            // --- 3. MANUAL TRIGGER: Absolute sweeping of all threads ---
+            // --- 3. MANUAL TRIGGER: Nuke everything from user ---
             else if (context.eventName === 'workflow_dispatch') {
-              console.log(`Starting absolute historical purge across ALL repository threads...`);
+              console.log(`Starting bulk closure for ALL issues created by ${TARGET_USER}...`);
 
-              // Paginate through EVERY single issue/PR in the repository (both open and closed)
               const issuePages = github.paginate.iterator(github.rest.issues.listForRepo, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                state: 'all',
+                creator: TARGET_USER, // Targets only their items
+                state: 'all',         // Fetches both open and older closed ones to lock them
                 per_page: 100
               });
 
               for await (const { data: issues } of issuePages) {
                 for (const issue of issues) {
+                  if (issue.pull_request) continue; // Skip Pull Requests
+
+                  // Close the issue if it is currently open
+                  if (issue.state !== 'closed') {
+                    await github.rest.issues.update({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      state: 'closed'
+                    });
+                    console.log(`Successfully closed issue #${issue.number}`);
+                  }
                   
-                  // Task A: If the spammer created the root issue itself, lock and close it
-                  if (!issue.pull_request && issue.user.login === TARGET_USER && issue.body && issue.body.includes(TARGET_LINK)) {
-                    if (issue.state !== 'closed') {
-                      await github.rest.issues.update({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        issue_number: issue.number,
-                        state: 'closed'
-                      });
-                    }
-                    if (!issue.locked) {
-                      await github.rest.issues.lock({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        issue_number: issue.number,
-                        lock_reason: 'spam'
-                      });
-                    }
-                    console.log(`Closed & locked root spam issue #${issue.number}`);
+                  // Lock the thread to prevent further spam comments
+                  if (!issue.locked) {
+                    await github.rest.issues.lock({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      lock_reason: 'spam'
+                    });
+                    console.log(`Successfully locked issue #${issue.number}`);
                   }
-
-                  // Task B: Scan inside this specific thread for the spammer's comments
-                  const commentPages = github.paginate.iterator(github.rest.issues.listComments, {
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: issue.number,
-                    per_page: 100
-                  });
-
-                  for await (const { data: comments } of commentPages) {
-                    for (const comment of comments) {
-                      if (comment.user.login === TARGET_USER && comment.body && comment.body.includes(TARGET_LINK)) {
-                        await github.rest.issues.deleteComment({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          comment_id: comment.id
-                        });
-                        console.log(`Deleted historical comment ${comment.id} from issue #${issue.number}`);
-                      }
-                    }
-                  }
-
                 }
               }
-              console.log("Absolute historical purge completed successfully.");
+              console.log("All target issues have been successfully closed and locked.");
             }
