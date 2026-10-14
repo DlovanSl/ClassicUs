@@ -7,7 +7,7 @@ ClassicUs is a project that aims to refine the classic, old feeling of Among Us 
 # Lobby Hosting
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/c03ff711-8998-4d4b-9156-38b017a5acc6" />
 
-The game allows you to play online with others and there is NO timer of Lobby closing down due to inactivity.
+The game allows you to play online with others and there is an activity up to 15m before room closes.
 
 
 # ...up to 100 players in a lobby??????
@@ -52,7 +52,7 @@ The game will have no quickchat restrictions or age verifications, but that does
 
 # ⚠️ Disclaimer
 
-Classic Us is in any shape of form not officially affiliated or connected with the main Among Us and therefore it is just a fan-game for the people that loves this type of fan-projects. Innersloth LLC reserves the right to tell us to change things up or tell us to change the route we go on for the game and this is made for the love of OG Among Us & and for fun.
+Classic Us is in any shape of form not officially affiliated or connected with the main Among Us and therefore it is just a fan-game for the people that loves this type of fan-projects. This is made for the love of OG Among Us & and for fun.
 
 Thanks for reading! I hope you understood!
 
