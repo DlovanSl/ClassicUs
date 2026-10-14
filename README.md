@@ -1,6 +1,6 @@
 # ClassicUs
 
-ClassicUs is a project that aims to refine the classic, old feeling of Among Us from 2020-2021, and it is based on an older version of the game.
+ClassicUs is a project that aims to refine the classic, old feeling of Among Us from 2020-2021, and it is based on an older look of the game with extra fun features.
 ![Loading](https://github.com/user-attachments/assets/93f5a2b7-7bba-44e5-9ed0-2bc4ed54e3ac)
 
 
