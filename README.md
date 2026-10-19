@@ -9,6 +9,7 @@ ClassicUs is a project that aims to refine the classic, old feeling of Among Us 
 
 The game allows you to play online with others and there is an activity up to 15m before room closes.
 
+skibidi toliet sigma rizz tung tung tung sahur😂😂😂😂😂
 
 # ...up to 100 players in a lobby??????
 
